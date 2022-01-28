@@ -18,14 +18,14 @@ class ProductType extends AbstractType
         ->add('name', TextType::class)
             ->add('price', IntegerType::class)
             ->add('description', TextType::class)
-            ->add('save', SubmitType::class, ['label' => 'Create producto'])
+            ->add('save', SubmitType::class, ['label' => 'Guardar'])
         ;
     }
 
     // public function configureOptions(OptionsResolver $resolver): void
     // {
     //     $resolver->setDefaults([
-    //         'data_class' => ProductType::class,
+    //         'data_class' => ProductType::class
     //     ]);
     // }
 

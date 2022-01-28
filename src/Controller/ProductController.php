@@ -187,11 +187,11 @@ class ProductController extends AbstractController
 
 
     /**
-     * @Route("/muestraProdCat", name="catprod")
+     * @Route("/muestraProdCat/{id}", name="catprod")
      */
-    public function showProducts(ManagerRegistry $doctrine): Response
+    public function showProducts(ManagerRegistry $doctrine, int $id): Response
     {
-        $category = $doctrine->getRepository(Category::class)->find(1);
+        $category = $doctrine->getRepository(Category::class)->find($id);
 
         $products = $category->getProducts();
 
@@ -204,15 +204,15 @@ class ProductController extends AbstractController
     /**
      * @Route("/form_new", name="newww")
      */
-    public function new(Request $request,ManagerRegistry $doctrine): Response
+    public function new(Request $request, ManagerRegistry $doctrine): Response
     {
-  // creates a task object and initializes some data for this example
+        // creates a task object and initializes some data for this example
         $product = new Product();
         $product->setName('ejemplo');
         $product->setPrice(44);
         $product->setDescription('ejemplo');
 
-        $form = $this->createForm(ProductType::class,$product);
+        $form = $this->createForm(ProductType::class, $product);
 
 
         $form->handleRequest($request);
@@ -221,17 +221,11 @@ class ProductController extends AbstractController
             // but, the original `$task` variable has also been updated
             $product = $form->getData();
 
-            $cat = $doctrine->getRepository(Category::class)->find(1);
-
-            $product->setCategory($cat);
-            $cat->addProduct($product);
-    
-            $entityManager = $doctrine->getManager();
-            $entityManager->persist($product);
-            $entityManager->flush();
+            ProductController::creaProd($doctrine, $product);
             // ... perform some action, such as saving the task to the database
-    
-            return $this->redirectToRoute('catprod');
+            return $this->redirectToRoute('catprod', array(
+                'id' => 1
+            ));
         }
 
         return $this->renderForm('product/new.html.twig', [
@@ -239,30 +233,65 @@ class ProductController extends AbstractController
         ]);
     }
 
-    
 
-    // /**
-    //  * @Route("/crear_prod", name="crea_prod")
-    //  */
-    // public function creaProd(ManagerRegistry $doctrine,Product $producto): Response
-    // {
+        /**
+     * @Route("/form_edit/{id}", name="edit_form")
+     */
+    public function editaForm(ProductRepository $productRepository,Request $request, ManagerRegistry $doctrine,int $id): Response
+    {
+        // creates a task object and initializes some data for this example
+        $product = $productRepository->find($id);
 
-    //     $product = new Product();
-    //     // $product->setName('Teclado leds 3434');
-    //     // $product->setPrice(55.99);
-    //     // $product->setDescription('Bastante norma, pero tiene luces!!');
+        $form = $this->createForm(ProductType::class, $product);
 
-    //     $cat = $doctrine->getRepository(Category::class)->find(1);
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            // $form->getData() holds the submitted values
+            // but, the original `$task` variable has also been updated
+            $product = $form->getData();
 
-    //     $product->setCategory($cat);
-    //     $cat->addProduct($product);
+            ProductController::creaProd($doctrine, $product);
+            // ... perform some action, such as saving the task to the database
+            return $this->redirectToRoute('catprod', array(
+                'id' => 1
+            ));
+        }
 
-    //     $entityManager = $doctrine->getManager();
-    //     $entityManager->persist($product);
-    //     $entityManager->flush();
+        return $this->renderForm('product/new.html.twig', [
+            'form' => $form,
+        ]);
+    }
 
-    //     return new Response(
-    //         'User guardado'
-    //     );
-    // }
+
+    static function creaProd(ManagerRegistry $doctrine, Product $producto)
+    {
+
+        $cat = $doctrine->getRepository(Category::class)->find(1);
+
+        $producto->setCategory($cat);
+        $cat->addProduct($producto);
+
+        $entityManager = $doctrine->getManager();
+        $entityManager->persist($producto);
+        $entityManager->flush();
+    }
+
+     /**
+     * @Route("/form_delete/{id}", name="edit_delete")
+     */
+    public function borraProd(ProductRepository $productRepository,ManagerRegistry $doctrine,int $id)
+    {
+        $product = $productRepository->find($id);
+        $entityManager = $doctrine->getManager();
+        $entityManager->remove($product);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('catprod', array(
+            'id' => 1
+        ));
+        
+        
+    }
+   
+
 }
