@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Product;
 use App\Entity\Category;
+use App\Form\Type\ProductType;
 
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -11,7 +12,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Repository\ProductRepository;
 use Symfony\Component\HttpFoundation\Response;
-
+use Symfony\Component\HttpFoundation\Request;
 
 class ProductController extends AbstractController
 {
@@ -91,7 +92,7 @@ class ProductController extends AbstractController
     {
         // use the Product!
         // ...
-        return new Response('El producto "' . $product->getName() . '" tiene un precio de "' . $product->getPrice().'€"');
+        return new Response('El producto "' . $product->getName() . '" tiene un precio de "' . $product->getPrice() . '€"');
     }
 
     /**
@@ -186,11 +187,11 @@ class ProductController extends AbstractController
 
 
     /**
-     * @Route("/muestraProdCat/{id}", name="catprod")
+     * @Route("/muestraProdCat", name="catprod")
      */
-    public function showProducts(ManagerRegistry $doctrine, int $id): Response
+    public function showProducts(ManagerRegistry $doctrine): Response
     {
-        $category = $doctrine->getRepository(Category::class)->find($id);
+        $category = $doctrine->getRepository(Category::class)->find(1);
 
         $products = $category->getProducts();
 
@@ -199,8 +200,69 @@ class ProductController extends AbstractController
             'categorias' => $category
         ]);
     }
+
+    /**
+     * @Route("/form_new", name="newww")
+     */
+    public function new(Request $request,ManagerRegistry $doctrine): Response
+    {
+  // creates a task object and initializes some data for this example
+        $product = new Product();
+        $product->setName('ejemplo');
+        $product->setPrice(44);
+        $product->setDescription('ejemplo');
+
+        $form = $this->createForm(ProductType::class,$product);
+
+
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            // $form->getData() holds the submitted values
+            // but, the original `$task` variable has also been updated
+            $product = $form->getData();
+
+            $cat = $doctrine->getRepository(Category::class)->find(1);
+
+            $product->setCategory($cat);
+            $cat->addProduct($product);
+    
+            $entityManager = $doctrine->getManager();
+            $entityManager->persist($product);
+            $entityManager->flush();
+            // ... perform some action, such as saving the task to the database
+    
+            return $this->redirectToRoute('catprod');
+        }
+
+        return $this->renderForm('product/new.html.twig', [
+            'form' => $form,
+        ]);
+    }
+
+    
+
+    // /**
+    //  * @Route("/crear_prod", name="crea_prod")
+    //  */
+    // public function creaProd(ManagerRegistry $doctrine,Product $producto): Response
+    // {
+
+    //     $product = new Product();
+    //     // $product->setName('Teclado leds 3434');
+    //     // $product->setPrice(55.99);
+    //     // $product->setDescription('Bastante norma, pero tiene luces!!');
+
+    //     $cat = $doctrine->getRepository(Category::class)->find(1);
+
+    //     $product->setCategory($cat);
+    //     $cat->addProduct($product);
+
+    //     $entityManager = $doctrine->getManager();
+    //     $entityManager->persist($product);
+    //     $entityManager->flush();
+
+    //     return new Response(
+    //         'User guardado'
+    //     );
+    // }
 }
-
-
-
-//kernel evento manejador de eventos not found, atraparlo y manejar evento 
